@@ -133,6 +133,88 @@ body {
   line-height: 1.6;
 }
 
+/* --- Status Bar (Counters) --- */
+.status-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 32px;
+}
+
+.counter-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  padding: 0 16px;
+}
+
+.counter-value {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  transition: color 0.3s ease;
+}
+
+.counter-total {
+  color: var(--text-muted);
+}
+
+.counter-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-top: 4px;
+}
+
+.counter-divider {
+  width: 1px;
+  height: 48px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.counter-progress {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 20px;
+  overflow: hidden;
+}
+
+.counter-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s var(--ease-smooth);
+}
+
+.batch-info {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: var(--accent-glow);
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+
 /* --- Upload Zone --- */
 .upload-zone {
   position: relative;
@@ -618,6 +700,22 @@ body {
     font-size: clamp(48px, 14vw, 80px);
   }
 
+  .status-bar {
+    padding: 20px 16px;
+  }
+
+  .counter-value {
+    font-size: clamp(28px, 8vw, 40px);
+  }
+
+  .counter {
+    padding: 0 8px;
+  }
+
+  .counter-divider {
+    height: 36px;
+  }
+
   .upload-zone {
     padding: 48px 24px;
   }
@@ -661,6 +759,22 @@ body {
 
   .hero-title {
     font-size: clamp(40px, 16vw, 64px);
+  }
+
+  .status-bar {
+    padding: 16px 12px;
+  }
+
+  .counter-group {
+    gap: 0;
+  }
+
+  .counter {
+    padding: 0 4px;
+  }
+
+  .counter-value {
+    font-size: clamp(24px, 10vw, 36px);
   }
 
   .btn {

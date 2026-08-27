@@ -28,6 +28,28 @@
             <p class="subtitle">Comprime tus imagenes JPEG en lote de forma rapida y sencilla</p>
         </header>
 
+        <div class="status-bar reveal" id="statusBar">
+            <div class="counter-group">
+                <div class="counter">
+                    <span class="counter-value" id="counterUploaded">0000</span>
+                    <span class="counter-label">Subidas</span>
+                </div>
+                <div class="counter-divider"></div>
+                <div class="counter">
+                    <span class="counter-value" id="counterCompressed">0000</span>
+                    <span class="counter-label">Comprimidas</span>
+                </div>
+                <div class="counter-divider"></div>
+                <div class="counter">
+                    <span class="counter-value counter-total" id="counterTotal">0000</span>
+                    <span class="counter-label">Max</span>
+                </div>
+            </div>
+            <div class="counter-progress">
+                <div class="counter-progress-fill" id="counterProgressFill"></div>
+            </div>
+        </div>
+
         <section class="upload-zone reveal" id="dropZone" aria-label="Zona de carga de imagenes">
             <div class="upload-icon">
                 <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -37,7 +59,7 @@
                 </svg>
             </div>
             <p class="upload-text">Arrastra tus imagenes aqui</p>
-            <p class="upload-subtext">o haz clic para seleccionar</p>
+            <p class="upload-subtext">o haz clic para seleccionar  /  max. 2000 imagenes JPEG</p>
             <input type="file" id="fileInput" multiple accept="image/jpeg,image/jpg" hidden>
         </section>
 
@@ -57,6 +79,7 @@
                 </button>
             </div>
             <div class="stats" id="stats"></div>
+            <p class="batch-info" id="batchInfo" style="display: none;"></p>
             <div class="actions">
                 <button class="btn btn-primary" id="compressBtn">Comprimir Todo</button>
                 <button class="btn btn-secondary" id="clearBtn">Limpiar</button>
