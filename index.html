@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compresor de Imágenes</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Compresor de Imágenes</h1>
+            <p class="subtitle">Comprime tus imágenes JPEG en lote de forma rápida y sencilla</p>
+        </header>
+
+        <div class="upload-zone" id="dropZone">
+            <div class="upload-icon">📁</div>
+            <p class="upload-text">Arrastra tus imágenes aquí</p>
+            <p class="upload-subtext">o haz clic para seleccionar</p>
+            <input type="file" id="fileInput" multiple accept="image/jpeg,image/jpg" hidden>
+        </div>
+
+        <div class="controls" id="controls" style="display: none;">
+            <div class="compression-modes">
+                <button class="mode-btn active" data-quality="0.8">🟢 Baja (80%)</button>
+                <button class="mode-btn" data-quality="0.6">🟡 Media (60%)</button>
+                <button class="mode-btn" data-quality="0.4">🔴 Alta (40%)</button>
+            </div>
+            <div class="stats" id="stats"></div>
+            <div class="actions">
+                <button class="btn btn-primary" id="compressBtn">⚙️ Comprimir Todo</button>
+                <button class="btn btn-secondary" id="clearBtn">🗑️ Limpiar</button>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-text" id="progressText">0 / 0 imágenes</p>
+        </div>
+
+        <div class="images-grid" id="imagesGrid"></div>
+
+        <div class="download-actions" id="downloadActions" style="display: none;">
+            <button class="btn btn-success" id="downloadAllBtn">📦 Descargar ZIP</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
