@@ -5,8 +5,6 @@
 
 const MAX_IMAGES = 2000;
 const BATCH_SIZE = 100;
-const REMOVE_BG_URL = 'https://api.remove.bg/v1.0/removebg';
-const DEFAULT_API_KEY = 'WGg3UfiNER6UaotKGEFERp4q';
 
 const IMAGE_MIMES = {
   jpg: 'image/jpeg',
@@ -51,8 +49,8 @@ const counterProgressFill = document.getElementById('counterProgressFill');
 const batchInfo = document.getElementById('batchInfo');
 const outputFormatSelect = document.getElementById('outputFormat');
 const bgRemoveToggle = document.getElementById('bgRemoveToggle');
-const apiKeyInput = document.getElementById('apiKeyInput');
 const bgConfig = document.getElementById('bgConfig');
+const bgStatus = document.getElementById('bgStatus');
 const removeBgBtn = document.getElementById('removeBgBtn');
 
 /* --- Scroll Reveal Observer --- */
@@ -129,9 +127,6 @@ removeBgBtn.addEventListener('click', removeBackgrounds);
 
 bgRemoveToggle.addEventListener('change', () => {
   bgConfig.style.display = bgRemoveToggle.checked ? 'block' : 'none';
-  if (bgRemoveToggle.checked && !apiKeyInput.value) {
-    apiKeyInput.value = loadApiKey();
-  }
 });
 
 outputFormatSelect.addEventListener('change', () => {
@@ -615,22 +610,20 @@ function extFromMime(mime) {
   return m || null;
 }
 
-/* --- API key helpers --- */
-function loadApiKey() {
-  try {
-    return localStorage.getItem('removebg_api_key') || DEFAULT_API_KEY;
-  } catch (e) {
-    return DEFAULT_API_KEY;
+/* --- Background Removal (AI local en navegador, IMG.LY ISNet/ONNX) --- */
+async function getBgRemover() {
+  if (typeof window.__loadRemoveBackground === 'function') {
+    return await window.__loadRemoveBackground();
   }
+  throw new Error('El modulo de eliminacion de fondo no cargo correctamente. Recarga la pagina.');
 }
 
-function saveApiKey(key) {
-  try {
-    localStorage.setItem('removebg_api_key', key);
-  } catch (e) {}
+function setBgStatus(text) {
+  if (!bgStatus) return;
+  bgStatus.style.display = 'block';
+  bgStatus.textContent = text;
 }
 
-/* --- Background Removal (remove.bg) --- */
 async function removeBackgrounds() {
   if (isRemovingBg || isCompressing) return;
 
@@ -640,18 +633,29 @@ async function removeBackgrounds() {
     return;
   }
 
-  const key = (apiKeyInput.value || '').trim() || loadApiKey();
-  if (!key) {
-    alert('Ingresa tu API key de remove.bg para quitar el fondo.');
-    return;
-  }
-  saveApiKey(key.trim());
-
   isRemovingBg = true;
   removeBgBtn.disabled = true;
-  removeBgBtn.textContent = 'Quitando fondo...';
+  removeBgBtn.textContent = 'Cargando modelo...';
+  setBgStatus('Cargando el modelo de IA (solo la primera vez, ~80MB)...');
   progressContainer.style.display = 'block';
   revealObserver.observe(progressContainer);
+
+  let remover;
+  try {
+    remover = await getBgRemover();
+  } catch (err) {
+    console.error('Error cargando el modelo:', err);
+    alert('No se pudo cargar el modelo de IA. Verifica tu conexion y recarga la pagina.');
+    removeBgBtn.disabled = false;
+    removeBgBtn.textContent = 'Quitar Fondo (IA)';
+    progressContainer.style.display = 'none';
+    setBgStatus('Error al cargar el modelo.');
+    isRemovingBg = false;
+    return;
+  }
+
+  setBgStatus('Modelo listo. Procesando imagenes...');
+  removeBgBtn.textContent = 'Quitando fondo...';
 
   let ok = 0;
   let fail = 0;
@@ -664,14 +668,20 @@ async function removeBackgrounds() {
     processed++;
 
     try {
-      const resultBlob = await removeBgSingle(img.file, key.trim());
-      img.file = resultBlob;
+      const resultBlob = await remover(img.file, {
+        model: 'isnet_fp16',
+        output: { format: 'image/png', quality: 1 },
+        device: 'cpu',
+      });
+
+      img.file = new File([resultBlob], 'removed.png', { type: 'image/png' });
       img.originalSize = resultBlob.size;
       img.originalFormat = 'png';
       img.compressedBlob = null;
       img.compressedSize = null;
       img.isVideo = false;
       img.outputMime = 'image/png';
+      img.backgroundRemoved = true;
 
       ok++;
 
@@ -702,7 +712,7 @@ async function removeBackgrounds() {
     counterProgressFill.style.width = `${progress}%`;
     progressText.textContent = `${processed} / ${total} fondos`;
 
-    if (processed % 2 === 0) await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
   }
 
   progressFill.style.width = '100%';
@@ -710,40 +720,36 @@ async function removeBackgrounds() {
   progressText.textContent = `${total} / ${total} fondos`;
 
   if (fail > 0) {
-    alert(`${ok} procesadas, ${fail} con error. Revisa tu API key y creditos.`);
+    alert(`${ok} procesadas, ${fail} con error.`);
   }
 
   removeBgBtn.disabled = false;
-  removeBgBtn.textContent = 'Quitar Fondo';
+  removeBgBtn.textContent = 'Quitar Fondo (IA)';
   progressContainer.style.display = 'none';
+  setBgStatus('');
   updateStats();
   isRemovingBg = false;
 }
 
-function removeBgSingle(file, apiKey) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', REMOVE_BG_URL);
-    xhr.setRequestHeader('X-Api-Key', apiKey);
-    xhr.responseType = 'blob';
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        resolve(new File([xhr.response], 'removed.png', { type: 'image/png' }));
-      } else {
-        let msg = `HTTP ${xhr.status}`;
-        if (xhr.response) {
-          xhr.response.text().then((t) => {
-            reject(new Error(msg + ' - ' + t.slice(0, 120)));
-          }).catch(() => reject(new Error(msg)));
-        } else {
-          reject(new Error(msg));
-        }
-      }
-    };
-    xhr.onerror = () => reject(new Error('Error de red con remove.bg'));
-    const fd = new FormData();
-    fd.append('image_file', file);
-    fd.append('size', 'auto');
-    xhr.send(fd);
+/* --- Preload helper (optional, warm up the model in the background) --- */
+async function preloadBgModel() {
+  try {
+    if (typeof window.__loadRemoveBackground !== 'function') return;
+    const remover = await window.__loadRemoveBackground();
+    if (remover && remover.preload) {
+      await remover.preload({ model: 'isnet_fp16', device: 'cpu' });
+    }
+  } catch (e) {
+    console.warn('No se pudo pre-cargar el modelo:', e);
+  }
+}
+
+if (bgRemoveToggle) {
+  bgRemoveToggle.addEventListener('change', async () => {
+    bgConfig.style.display = bgRemoveToggle.checked ? 'block' : 'none';
+    if (bgRemoveToggle.checked) {
+      setBgStatus('');
+      preloadBgModel();
+    }
   });
 }

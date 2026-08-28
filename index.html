@@ -100,16 +100,13 @@
                     <label class="toggle">
                         <input type="checkbox" id="bgRemoveToggle">
                         <span class="toggle-track"></span>
-                        <span class="toggle-label">Quitar fondo (remove.bg)</span>
+                        <span class="toggle-label">Quitar fondo (local)</span>
                     </label>
                 </div>
                 <div class="bg-config" id="bgConfig" style="display: none;">
-                    <label class="format-label" for="apiKeyInput">API key remove.bg</label>
-                    <div class="api-key-row">
-                        <input type="password" class="api-key-input" id="apiKeyInput" placeholder="Ingresa tu API key">
-                        <button class="btn btn-secondary btn-sm" id="removeBgBtn" type="button">Quitar Fondo</button>
-                    </div>
-                    <p class="bg-hint">Solo se usa para las imagenes seleccionadas. Consume creditos de tu cuenta remove.bg.</p>
+                    <button class="btn btn-secondary btn-sm" id="removeBgBtn" type="button">Quitar Fondo (IA)</button>
+                    <p class="bg-hint">Procesamiento 100% local en tu navegador (modelo ISNet/ONNX). Detecta el sujeto automaticamente sin importar el color de fondo. La primera vez descarga el modelo (~80MB), luego queda en cache.</p>
+                    <div class="ai-status" id="bgStatus" style="display: none;"></div>
                 </div>
             </div>
 
@@ -136,5 +133,6 @@
     </main>
 
     <script src="app.js"></script>
+    <script type="module" src="background-remove-loader.js"></script>
 </body>
 </html>
