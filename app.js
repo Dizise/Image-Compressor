@@ -5,21 +5,6 @@
 
 const MAX_IMAGES = 2000;
 const BATCH_SIZE = 100;
-const REMOVE_BG_URL = 'https://api.remove.bg/v1.0/removebg';
-const DEFAULT_API_KEY = 'WGg3UfiNER6UaotKGEFERp4q';
-
-const IMAGE_MIMES = {
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-  avif: 'image/avif',
-  gif: 'image/gif',
-};
-const ALLOWED_TYPES = [
-  'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'video/mp4',
-];
-const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'mp4'];
 
 let images = [];
 let selectedQuality = 0.6;
@@ -27,7 +12,6 @@ let uploadedCount = 0;
 let compressedCount = 0;
 let totalUploaded = 0;
 let isCompressing = false;
-let isRemovingBg = false;
 
 /* --- DOM References --- */
 const dropZone = document.getElementById('dropZone');
@@ -49,11 +33,6 @@ const counterCompressed = document.getElementById('counterCompressed');
 const counterTotal = document.getElementById('counterTotal');
 const counterProgressFill = document.getElementById('counterProgressFill');
 const batchInfo = document.getElementById('batchInfo');
-const outputFormatSelect = document.getElementById('outputFormat');
-const bgRemoveToggle = document.getElementById('bgRemoveToggle');
-const apiKeyInput = document.getElementById('apiKeyInput');
-const bgConfig = document.getElementById('bgConfig');
-const removeBgBtn = document.getElementById('removeBgBtn');
 
 /* --- Scroll Reveal Observer --- */
 const revealObserver = new IntersectionObserver(
@@ -125,19 +104,6 @@ compressBtn.addEventListener('click', compressAll);
 clearBtn.addEventListener('click', clearAll);
 downloadAllBtn.addEventListener('click', downloadAll);
 stickyDownloadBtn.addEventListener('click', downloadAll);
-removeBgBtn.addEventListener('click', removeBackgrounds);
-
-bgRemoveToggle.addEventListener('change', () => {
-  bgConfig.style.display = bgRemoveToggle.checked ? 'block' : 'none';
-  if (bgRemoveToggle.checked && !apiKeyInput.value) {
-    apiKeyInput.value = loadApiKey();
-  }
-});
-
-outputFormatSelect.addEventListener('change', () => {
-  if (isCompressing || isRemovingBg) return;
-  updateStats();
-});
 
 /* --- Counter Update --- */
 function updateCounters() {
@@ -147,45 +113,30 @@ function updateCounters() {
 }
 
 /* --- File Handling --- */
-function getExtension(name) {
-  return name.split('.').pop().toLowerCase();
-}
-
-function isAllowed(file) {
-  return (
-    ALLOWED_TYPES.includes(file.type) ||
-    ALLOWED_EXTS.includes(getExtension(file.name))
-  );
-}
-
-function isVideoOf(file) {
-  return file.type.startsWith('video/') || file.type === 'video/mp4' || getExtension(file.name) === 'mp4';
-}
-
 function handleFiles(files) {
-  if (isCompressing || isRemovingBg) return;
+  if (isCompressing) return;
 
-  const validFiles = Array.from(files).filter(isAllowed);
+  const jpegFiles = Array.from(files).filter(
+    (f) => f.type === 'image/jpeg' || f.name.toLowerCase().endsWith('.jpg')
+  );
 
-  if (validFiles.length === 0) {
-    alert('Por favor, selecciona archivos con formato valido (JPG, PNG, WEBP, GIF, AVIF o MP4)');
+  if (jpegFiles.length === 0) {
+    alert('Por favor, selecciona archivos JPEG (.jpg)');
     return;
   }
 
-  if (validFiles.length > MAX_IMAGES) {
-    alert(`Maximo ${MAX_IMAGES} archivos por carga. Seleccionaste ${validFiles.length}.`);
+  if (jpegFiles.length > MAX_IMAGES) {
+    alert(`Maximo ${MAX_IMAGES} imagenes por carga. Seleccionaste ${jpegFiles.length}.`);
     return;
   }
 
   clearAll();
 
-  images = validFiles.map((file) => ({
+  images = jpegFiles.map((file) => ({
     file: file,
     originalSize: file.size,
-    originalFormat: getExtension(file.name) === 'jpeg' ? 'jpg' : getExtension(file.name),
     compressedBlob: null,
     compressedSize: null,
-    isVideo: isVideoOf(file),
   }));
 
   totalUploaded = images.length;
@@ -209,20 +160,15 @@ function handleFiles(files) {
 /* --- Thumbnail Generation (on-demand from File) --- */
 function generateThumbnail(file, imgEl) {
   const url = URL.createObjectURL(file);
-  const isVideo = file.type.startsWith('video/') || getExtension(file.name) === 'mp4';
-
-  const renderThumb = (source) => {
+  const img = new Image();
+  img.onload = () => {
     const MAX_WIDTH = 300;
-    const scale = source.width > MAX_WIDTH ? MAX_WIDTH / source.width : 1;
+    const scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
     const canvas = document.createElement('canvas');
-    canvas.width = source.width * scale;
-    canvas.height = source.height * scale;
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
     const ctx = canvas.getContext('2d');
-    if (isVideo) {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
     canvas.toBlob((blob) => {
       const thumbUrl = URL.createObjectURL(blob);
@@ -230,26 +176,6 @@ function generateThumbnail(file, imgEl) {
       imgEl.onload = () => URL.revokeObjectURL(thumbUrl);
     }, 'image/jpeg', 0.6);
   };
-
-  if (isVideo) {
-    const video = document.createElement('video');
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'metadata';
-    video.src = url;
-    video.onloadeddata = () => {
-      video.currentTime = 0;
-      renderThumb(video);
-    };
-    video.onerror = () => URL.revokeObjectURL(url);
-    video.onloadedmetadata = () => {
-      video.currentTime = Math.min(0.1, video.duration || 0);
-    };
-    return;
-  }
-
-  const img = new Image();
-  img.onload = () => renderThumb(img);
   img.onerror = () => URL.revokeObjectURL(url);
   img.src = url;
 }
@@ -287,12 +213,7 @@ function formatSize(bytes) {
 
 function updateStats() {
   const totalOriginal = images.reduce((sum, img) => sum + img.originalSize, 0);
-  const videos = images.filter((img) => img.isVideo).length;
-  let text = `${images.length} archivos seleccionados  /  Tamano total: ${formatSize(totalOriginal)}`;
-  if (videos > 0) text += `  /  ${videos} video(s)`;
-  const fmt = outputFormatSelect.value;
-  if (fmt !== 'original') text += `  /  Salida: ${fmt.toUpperCase()}`;
-  stats.textContent = text;
+  stats.textContent = `${images.length} imagenes seleccionadas  /  Tamano total: ${formatSize(totalOriginal)}`;
 }
 
 /* --- Compression (batched, memory-safe) --- */
@@ -315,7 +236,7 @@ async function compressAll() {
 
   if (batches > 1) {
     batchInfo.style.display = 'block';
-    batchInfo.textContent = `${batches} lotes de ${BATCH_SIZE} archivos`;
+    batchInfo.textContent = `${batches} lotes de ${BATCH_SIZE} imagenes`;
   } else {
     batchInfo.style.display = 'none';
   }
@@ -327,16 +248,12 @@ async function compressAll() {
     const img = images[i];
 
     try {
-      if (img.isVideo) {
-        await compressVideo(img, i);
-      } else {
-        await compressImage(img, i);
-      }
+      await compressImage(img, i);
       totalOriginal += img.originalSize;
       totalCompressed += img.compressedSize;
       compressedCount++;
     } catch (err) {
-      console.warn(`Error comprimiendo archivo ${i}: ${err.message}`);
+      console.warn(`Error comprimiendo imagen ${i}: ${err.message}`);
       const card = document.getElementById(`card-${i}`);
       if (card) {
         const el = document.getElementById(`reduction-${i}`);
@@ -354,7 +271,7 @@ async function compressAll() {
     const progress = ((i + 1) / total) * 100;
     progressFill.style.width = `${progress}%`;
     counterProgressFill.style.width = `${progress}%`;
-    progressText.textContent = `${i + 1} / ${total} archivos`;
+    progressText.textContent = `${i + 1} / ${total} imagenes`;
 
     if ((i + 1) % 5 === 0) {
       await new Promise((r) => setTimeout(r, 0));
@@ -376,14 +293,6 @@ async function compressAll() {
 }
 
 /* --- Single Image Compression (createImageBitmap, no data URL) --- */
-function getOutputMime(originalMime, originalExt) {
-  const fmt = outputFormatSelect.value;
-  if (fmt === 'original') {
-    return originalMime || IMAGE_MIMES[originalExt] || 'image/jpeg';
-  }
-  return IMAGE_MIMES[fmt] || 'image/webp';
-}
-
 function compressImage(imageObj, index) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -392,25 +301,19 @@ function compressImage(imageObj, index) {
       const canvas = document.createElement('canvas');
       canvas.width = bitmap.width;
       canvas.height = bitmap.height;
-      const ctx = canvas.getContext('2d', { alpha: true });
+      const ctx = canvas.getContext('2d');
       ctx.drawImage(bitmap, 0, 0);
       bitmap.close();
 
-      const outMime = getOutputMime(IMAGE_MIMES[imageObj.originalFormat], imageObj.originalFormat);
-      let blob;
-
-      if (outMime === 'image/gif') {
-        blob = await canvasToGif(canvas);
-      } else {
-        const quality = outMime === 'image/png' ? 1 : selectedQuality;
-        blob = await new Promise((res, rej) => {
-          canvas.toBlob((b) => (b ? res(b) : rej(new Error('toBlob returned null'))), outMime, quality);
-        });
-      }
+      const blob = await new Promise((res, rej) => {
+        canvas.toBlob((b) => {
+          if (b) res(b);
+          else rej(new Error('toBlob returned null'));
+        }, 'image/jpeg', selectedQuality);
+      });
 
       imageObj.compressedBlob = blob;
       imageObj.compressedSize = blob.size;
-      imageObj.outputMime = blob.type || outMime;
 
       const reduction = imageObj.originalSize > 0
         ? ((1 - blob.size / imageObj.originalSize) * 100).toFixed(1)
@@ -428,108 +331,6 @@ function compressImage(imageObj, index) {
       resolve();
     } catch (err) {
       reject(err);
-    }
-  });
-}
-
-/* --- Video compression via MediaRecorder --- */
-function compressVideo(imageObj, index) {
-  return new Promise(async (resolve, reject) => {
-    let url = null;
-    try {
-      url = URL.createObjectURL(imageObj.file);
-      const video = document.createElement('video');
-      video.muted = true;
-      video.playsInline = true;
-      video.preload = 'auto';
-      video.src = url;
-
-      await new Promise((res, rej) => {
-        video.onloadedmetadata = res;
-        video.onerror = () => rej(new Error('No se pudo leer el video'));
-        setTimeout(() => rej(new Error('Timeout al leer el video')), 15000);
-      });
-
-      const duration = isFinite(video.duration) ? video.duration : 5;
-      const bitsPerSecond = Math.max(
-        250_000,
-        Math.round((imageObj.originalSize * 8 * selectedQuality) / Math.max(duration, 1))
-      );
-      const capDuration = Math.min(duration, 60);
-
-      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-        ? 'video/webm;codecs=vp9'
-        : 'video/webm';
-
-      const stream = video.captureStream(30);
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: bitsPerSecond });
-
-      const chunks = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunks.push(e.data);
-      };
-      const done = new Promise((res) => { recorder.onstop = res; });
-
-      recorder.start(250);
-      video.currentTime = 0;
-      await video.play();
-
-      const stopWhen = new Promise((res) => {
-        video.addEventListener('ended', res, { once: true });
-        setTimeout(res, capDuration * 1000 + 1500);
-      });
-      await stopWhen;
-
-      await video.pause();
-      stream.getTracks().forEach((t) => t.stop());
-      recorder.stop();
-      await done;
-
-      URL.revokeObjectURL(url);
-      url = null;
-
-      const blob = new Blob(chunks, { type: mimeType });
-
-      imageObj.compressedBlob = blob;
-      imageObj.compressedSize = blob.size;
-      imageObj.outputMime = mimeType;
-
-      const reduction = imageObj.originalSize > 0
-        ? ((1 - blob.size / imageObj.originalSize) * 100).toFixed(1)
-        : 0;
-
-      const sizeEl = document.getElementById(`compressed-${index}`);
-      const redEl = document.getElementById(`reduction-${index}`);
-      if (sizeEl) sizeEl.textContent = formatSize(blob.size);
-      if (redEl) {
-        redEl.textContent = `${reduction}% reduccion (WEBM)`;
-        redEl.classList.add('visible');
-      }
-
-      resolve();
-    } catch (err) {
-      if (url) URL.revokeObjectURL(url);
-      reject(err);
-    }
-  });
-}
-
-/* --- GIF encoding from canvas (simplified, 8-color palettized) --- */
-function canvasToGif(canvas) {
-  return new Promise((resolve, reject) => {
-    try {
-      const gif = new GIF({
-        workers: 0,
-        quality: 10,
-        width: canvas.width,
-        height: canvas.height,
-      });
-      gif.addFrame(canvas, { copy: true, delay: 0 });
-      gif.on('finished', (blob) => resolve(blob));
-      gif.on('error', reject);
-      gif.render();
-    } catch (err) {
-      reject(new Error('Generador GIF no disponible: ' + err.message));
     }
   });
 }
@@ -554,8 +355,6 @@ function clearAll() {
   counterProgressFill.style.width = '0%';
   stats.textContent = '';
   fileInput.value = '';
-  bgConfig.style.display = 'none';
-  bgRemoveToggle.checked = false;
 }
 
 /* --- Download (progressive ZIP) --- */
@@ -569,13 +368,12 @@ async function downloadAll() {
   stickyDownloadBtn.textContent = 'Creando ZIP...';
 
   const zip = new JSZip();
-  const folder = zip.folder('archivos_procesados');
+  const folder = zip.folder('imagenes_comprimidas');
 
   for (let i = 0; i < readyImages.length; i++) {
     const img = readyImages[i];
-    const baseName = img.file.name.replace(/\.[^.]+$/, '');
-    const ext = extFromMime(img.outputMime || img.compressedBlob.type) || 'jpg';
-    const newName = `${baseName}_compressed.${ext}`;
+    const ext = img.file.name.split('.').pop();
+    const newName = img.file.name.replace(`.${ext}`, `_compressed.jpg`);
     folder.file(newName, img.compressedBlob);
 
     if ((i + 1) % 200 === 0) {
@@ -594,156 +392,14 @@ async function downloadAll() {
       }
     );
 
-    saveAs(content, 'archivos_procesados.zip');
+    saveAs(content, 'imagenes_comprimidas.zip');
   } catch (err) {
     console.error('Error generando ZIP:', err);
-    alert('Error al crear el ZIP. Intenta con menos archivos.');
+    alert('Error al crear el ZIP. Intenta con menos imagenes.');
   }
 
   downloadAllBtn.disabled = false;
   stickyDownloadBtn.disabled = false;
   downloadAllBtn.textContent = 'Descargar ZIP';
   stickyDownloadBtn.textContent = 'Descargar ZIP';
-}
-
-/* --- Mime to extension --- */
-function extFromMime(mime) {
-  if (!mime) return null;
-  if (mime === 'image/jpeg') return 'jpg';
-  if (mime === 'video/webm') return 'webm';
-  const m = mime.split('/')[1];
-  return m || null;
-}
-
-/* --- API key helpers --- */
-function loadApiKey() {
-  try {
-    return localStorage.getItem('removebg_api_key') || DEFAULT_API_KEY;
-  } catch (e) {
-    return DEFAULT_API_KEY;
-  }
-}
-
-function saveApiKey(key) {
-  try {
-    localStorage.setItem('removebg_api_key', key);
-  } catch (e) {}
-}
-
-/* --- Background Removal (remove.bg) --- */
-async function removeBackgrounds() {
-  if (isRemovingBg || isCompressing) return;
-
-  const imageItems = images.filter((img) => !img.isVideo);
-  if (imageItems.length === 0) {
-    alert('No hay imagenes para procesar.');
-    return;
-  }
-
-  const key = (apiKeyInput.value || '').trim() || loadApiKey();
-  if (!key) {
-    alert('Ingresa tu API key de remove.bg para quitar el fondo.');
-    return;
-  }
-  saveApiKey(key.trim());
-
-  isRemovingBg = true;
-  removeBgBtn.disabled = true;
-  removeBgBtn.textContent = 'Quitando fondo...';
-  progressContainer.style.display = 'block';
-  revealObserver.observe(progressContainer);
-
-  let ok = 0;
-  let fail = 0;
-  const total = imageItems.length;
-  let processed = 0;
-
-  for (let i = 0; i < images.length; i++) {
-    const img = images[i];
-    if (img.isVideo) continue;
-    processed++;
-
-    try {
-      const resultBlob = await removeBgSingle(img.file, key.trim());
-      img.file = resultBlob;
-      img.originalSize = resultBlob.size;
-      img.originalFormat = 'png';
-      img.compressedBlob = null;
-      img.compressedSize = null;
-      img.isVideo = false;
-      img.outputMime = 'image/png';
-
-      ok++;
-
-      const sizeEl = document.getElementById(`compressed-${i}`);
-      const redEl = document.getElementById(`reduction-${i}`);
-      if (sizeEl) {
-        sizeEl.textContent = 'Fondo eliminado';
-        sizeEl.style.color = '#22c55e';
-      }
-      if (redEl) {
-        redEl.textContent = 'PNG con transparencia';
-        redEl.classList.add('visible');
-      }
-    } catch (err) {
-      console.warn(`Error quitando fondo ${i}: ${err.message}`);
-      fail++;
-      const el = document.getElementById(`reduction-${i}`);
-      if (el) {
-        el.textContent = 'Error fondo';
-        el.style.background = 'rgba(239, 68, 68, 0.12)';
-        el.style.color = '#ef4444';
-        el.classList.add('visible');
-      }
-    }
-
-    const progress = (processed / total) * 100;
-    progressFill.style.width = `${progress}%`;
-    counterProgressFill.style.width = `${progress}%`;
-    progressText.textContent = `${processed} / ${total} fondos`;
-
-    if (processed % 2 === 0) await new Promise((r) => setTimeout(r, 0));
-  }
-
-  progressFill.style.width = '100%';
-  counterProgressFill.style.width = '100%';
-  progressText.textContent = `${total} / ${total} fondos`;
-
-  if (fail > 0) {
-    alert(`${ok} procesadas, ${fail} con error. Revisa tu API key y creditos.`);
-  }
-
-  removeBgBtn.disabled = false;
-  removeBgBtn.textContent = 'Quitar Fondo';
-  progressContainer.style.display = 'none';
-  updateStats();
-  isRemovingBg = false;
-}
-
-function removeBgSingle(file, apiKey) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', REMOVE_BG_URL);
-    xhr.setRequestHeader('X-Api-Key', apiKey);
-    xhr.responseType = 'blob';
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        resolve(new File([xhr.response], 'removed.png', { type: 'image/png' }));
-      } else {
-        let msg = `HTTP ${xhr.status}`;
-        if (xhr.response) {
-          xhr.response.text().then((t) => {
-            reject(new Error(msg + ' - ' + t.slice(0, 120)));
-          }).catch(() => reject(new Error(msg)));
-        } else {
-          reject(new Error(msg));
-        }
-      }
-    };
-    xhr.onerror = () => reject(new Error('Error de red con remove.bg'));
-    const fd = new FormData();
-    fd.append('image_file', file);
-    fd.append('size', 'auto');
-    xhr.send(fd);
-  });
 }

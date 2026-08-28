@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
 </head>
 <body>
     <div class="noise-overlay"></div>
@@ -26,7 +25,7 @@
                 <span class="label-text">UETS / Comunicacion</span>
             </div>
             <h1 class="hero-title">Compresor<br>de Imagenes</h1>
-            <p class="subtitle">Comprime imagenes y videos en lote, convierte a otros formatos y elimina el fondo de tus fotos</p>
+            <p class="subtitle">Comprime tus imagenes JPEG en lote de forma rapida y sencilla</p>
         </header>
 
         <div class="status-bar reveal" id="statusBar">
@@ -60,59 +59,25 @@
                 </svg>
             </div>
             <p class="upload-text">Arrastra tus imagenes aqui</p>
-            <p class="upload-subtext">o haz clic para seleccionar  /  max. 2000 archivos (JPG, PNG, WEBP, GIF, AVIF, MP4)</p>
-            <input type="file" id="fileInput" multiple accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/avif,video/mp4" hidden>
+            <p class="upload-subtext">o haz clic para seleccionar  /  max. 2000 imagenes JPEG</p>
+            <input type="file" id="fileInput" multiple accept="image/jpeg,image/jpg" hidden>
         </section>
 
         <div class="controls reveal" id="controls" style="display: none;">
-            <div class="controls-group">
-                <div class="compression-modes">
-                    <button class="mode-btn" data-quality="0.8">
-                        <span class="mode-label">Baja</span>
-                        <span class="mode-value">80%</span>
-                    </button>
-                    <button class="mode-btn active" data-quality="0.6">
-                        <span class="mode-label">Media</span>
-                        <span class="mode-value">60%</span>
-                    </button>
-                    <button class="mode-btn" data-quality="0.4">
-                        <span class="mode-label">Alta</span>
-                        <span class="mode-value">40%</span>
-                    </button>
-                </div>
-
-                <div class="format-control">
-                    <label class="format-label" for="outputFormat">Formato de salida</label>
-                    <select class="format-select" id="outputFormat">
-                        <option value="original">Original</option>
-                        <option value="jpg">JPG</option>
-                        <option value="png">PNG</option>
-                        <option value="webp">WEBP</option>
-                        <option value="avif">AVIF</option>
-                        <option value="gif">GIF</option>
-                        <option value="mp4">MP4</option>
-                    </select>
-                </div>
+            <div class="compression-modes">
+                <button class="mode-btn" data-quality="0.8">
+                    <span class="mode-label">Baja</span>
+                    <span class="mode-value">80%</span>
+                </button>
+                <button class="mode-btn active" data-quality="0.6">
+                    <span class="mode-label">Media</span>
+                    <span class="mode-value">60%</span>
+                </button>
+                <button class="mode-btn" data-quality="0.4">
+                    <span class="mode-label">Alta</span>
+                    <span class="mode-value">40%</span>
+                </button>
             </div>
-
-            <div class="bg-meta">
-                <div class="bg-toggle-row">
-                    <label class="toggle">
-                        <input type="checkbox" id="bgRemoveToggle">
-                        <span class="toggle-track"></span>
-                        <span class="toggle-label">Quitar fondo (remove.bg)</span>
-                    </label>
-                </div>
-                <div class="bg-config" id="bgConfig" style="display: none;">
-                    <label class="format-label" for="apiKeyInput">API key remove.bg</label>
-                    <div class="api-key-row">
-                        <input type="password" class="api-key-input" id="apiKeyInput" placeholder="Ingresa tu API key">
-                        <button class="btn btn-secondary btn-sm" id="removeBgBtn" type="button">Quitar Fondo</button>
-                    </div>
-                    <p class="bg-hint">Solo se usa para las imagenes seleccionadas. Consume creditos de tu cuenta remove.bg.</p>
-                </div>
-            </div>
-
             <div class="stats" id="stats"></div>
             <p class="batch-info" id="batchInfo" style="display: none;"></p>
             <div class="actions">
