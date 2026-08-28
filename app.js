@@ -211,8 +211,23 @@ function updateCounters() {
 
 /* --- File Handling --- */
 function isAccepted(file) {
-  if (CONFIG.accept === '*' || CONFIG.accept === '*/*') return true;
   const name = file.name.toLowerCase();
+
+  if (CONFIG.kind === 'convert') {
+    const target = (window.CONVERT_OPTIONS && window.CONVERT_OPTIONS.target) || 'jpg';
+    const imageLike =
+      /^image\//.test(file.type) ||
+      /\.(jpe?g|png|webp|avif|bmp|gif|heic|heif|svg)$/i.test(name);
+    if (target === 'mp3') {
+      return (
+        /^(audio|video)\//.test(file.type) ||
+        /\.(mp3|wav|ogg|aac|flac|m4a|mp4|webm|mov|m4v)$/i.test(name)
+      );
+    }
+    return imageLike;
+  }
+
+  if (CONFIG.accept === '*' || CONFIG.accept === '*/*') return true;
   for (const ext of CONFIG.exts) {
     if (name.endsWith(ext.toLowerCase())) return true;
   }
@@ -221,6 +236,17 @@ function isAccepted(file) {
     .map((s) => s.trim())
     .some((t) => t === file.type);
 }
+
+window.setConvertTarget = function (target) {
+  window.CONVERT_OPTIONS = window.CONVERT_OPTIONS || {};
+  window.CONVERT_OPTIONS.target = target;
+  if (fileInput) {
+    fileInput.accept =
+      target === 'mp3'
+        ? 'audio/*,video/*,.mp3,.wav,.ogg,.aac,.flac,.m4a,.mp4,.webm,.mov'
+        : 'image/*';
+  }
+};
 
 function handleFiles(files) {
   if (isCompressing) return;
@@ -417,7 +443,15 @@ function applyResult(imageObj, index, blob) {
 async function compressAll() {
   if (isCompressing || images.length === 0) return;
 
-  if (CONFIG.kind === 'canvas' && CONFIG.outputMime === 'image/avif' && !avifSupported()) {
+  const convertTarget =
+    CONFIG.kind === 'convert' && window.CONVERT_OPTIONS
+      ? String(window.CONVERT_OPTIONS.target || '').toLowerCase()
+      : '';
+  const needsAvif =
+    (CONFIG.kind === 'canvas' && CONFIG.outputMime === 'image/avif') ||
+    convertTarget === 'avif';
+
+  if (needsAvif && !avifSupported()) {
     alert('Tu navegador no soporta codificacion AVIF. Usa Chrome o Edge.');
     return;
   }
@@ -510,6 +544,10 @@ async function compressImage(imageObj, index) {
       return compressMp3(imageObj);
     case 'zip':
       return compressZipItem(imageObj);
+    case 'convert':
+      return compressConvert(imageObj);
+    case 'mp4':
+      return compressMp4(imageObj);
     default:
       throw new Error('Tipo desconocido');
   }
@@ -690,10 +728,16 @@ async function compressHeic(imageObj) {
 }
 
 /* --- MP3 (lamejs) --- */
+function mp3Kbps() {
+  const v = selectedMode && typeof selectedMode.value === 'number' ? selectedMode.value : 192;
+  if (v >= 100) return v;
+  return v >= 0.8 ? 320 : v >= 0.65 ? 192 : 128;
+}
+
 async function compressMp3(imageObj) {
   if (!window.lamejs) throw new Error('lamejs no disponible');
 
-  const kbps = typeof selectedMode.value === 'number' ? selectedMode.value : 192;
+  const kbps = mp3Kbps();
   const buffer = await imageObj.file.arrayBuffer();
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) throw new Error('AudioContext no disponible');
@@ -730,6 +774,118 @@ async function compressZipItem(imageObj) {
   if (!window.CompressionStream) throw new Error('CompressionStream no disponible');
   const stream = imageObj.file.stream().pipeThrough(new CompressionStream('deflate'));
   const blob = await new Response(stream).blob();
+  applyResult(imageObj, getResultIndex(imageObj), blob);
+}
+
+/* --- CONVERT (dynamic target: image -> image, anything -> MP3) --- */
+const IMAGE_TARGETS = {
+  jpg: { mime: 'image/jpeg', ext: 'jpg' },
+  png: { mime: 'image/png', ext: 'png' },
+  webp: { mime: 'image/webp', ext: 'webp' },
+  avif: { mime: 'image/avif', ext: 'avif' },
+};
+
+async function compressConvert(imageObj) {
+  const target =
+    (window.CONVERT_OPTIONS && String(window.CONVERT_OPTIONS.target || '').toLowerCase()) || 'jpg';
+
+  if (target === 'mp3') return compressMp3(imageObj);
+
+  const meta = IMAGE_TARGETS[target];
+  if (!meta) throw new Error('Formato de destino no soportado');
+
+  const quality = typeof selectedMode.value === 'number' ? selectedMode.value : 0.8;
+  const isHeic =
+    /heic|heif/i.test(imageObj.file.type) || /\.heic$/i.test(imageObj.file.name);
+
+  let blob;
+  if (isHeic) {
+    if (!window.heic2any) throw new Error('heic2any no disponible');
+    const out = await heic2any({ blob: imageObj.file, toType: ['image/png'], quality: 1 });
+    const png = Array.isArray(out) ? out[0] : out;
+    const dec = await decodeImage(new File([png], imageObj.file.name, { type: 'image/png' }));
+    const canvas = canvasFromSource(dec, dec.w, dec.h);
+    dec.close();
+    blob = await canvasToBlob(canvas, meta.mime, quality);
+  } else {
+    const dec = await decodeImage(imageObj.file);
+    const canvas = canvasFromSource(dec, dec.w, dec.h);
+    dec.close();
+    blob = await canvasToBlob(canvas, meta.mime, quality);
+  }
+
+  imageObj.targetExt = meta.ext;
+  applyResult(imageObj, getResultIndex(imageObj), blob);
+}
+
+/* --- MP4 compression (ffmpeg.wasm, single-threaded core, works without COOP/COEP) --- */
+const FFMPEG_BASE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm';
+let _ffmpegPromise;
+
+async function ffmpegToBlobURL(url, mime) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Error descargando el motor FFmpeg');
+  const buf = await res.arrayBuffer();
+  return URL.createObjectURL(new Blob([buf], { type: mime }));
+}
+
+async function ensureFFmpeg(onStatus) {
+  if (_ffmpegPromise) return _ffmpegPromise;
+  _ffmpegPromise = (async () => {
+    if (!(window.FFmpegWASM && window.FFmpegWASM.FFmpeg)) {
+      throw new Error('No se pudo cargar la libreria FFmpeg');
+    }
+    if (onStatus) onStatus('Descargando motor FFmpeg (~32 MB, solo la primera vez)...');
+    const [coreURL, wasmURL] = await Promise.all([
+      ffmpegToBlobURL(`${FFMPEG_BASE}/ffmpeg-core.js`, 'text/javascript'),
+      ffmpegToBlobURL(`${FFMPEG_BASE}/ffmpeg-core.wasm`, 'application/wasm'),
+    ]);
+    const ffmpeg = new FFmpegWASM.FFmpeg();
+    const workerURL = new URL('assets/ffmpeg/worker.js', window.location.href).href;
+    await ffmpeg.load({ coreURL, wasmURL, classWorkerURL: workerURL });
+    if (onStatus) onStatus('');
+    return ffmpeg;
+  })();
+  return _ffmpegPromise;
+}
+
+async function compressMp4(imageObj) {
+  const ffmpeg = await ensureFFmpeg((msg) => {
+    const p = document.getElementById('progressText');
+    if (p && msg) p.textContent = msg;
+  });
+
+  const v = selectedMode.value || {};
+  const crf = v.crf != null ? v.crf : 28;
+  const abr = v.abr != null ? v.abr : 96;
+  const maxW = v.maxW || 0;
+  const fps = v.fps || 0;
+
+  const vf = [];
+  if (maxW) vf.push(`scale='min(${maxW},iw)':-2`);
+  if (fps) vf.push(`fps=${fps}`);
+
+  const args = ['-i', 'input.mp4'];
+  if (vf.length) args.push('-vf', vf.join(','));
+  args.push(
+    '-c:v', 'libx264',
+    '-preset', 'veryfast',
+    '-crf', String(crf),
+    '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac',
+    '-b:a', `${abr}k`,
+    '-movflags', '+faststart',
+    'output.mp4'
+  );
+
+  await ffmpeg.writeFile('input.mp4', new Uint8Array(await imageObj.file.arrayBuffer()));
+  await ffmpeg.exec(args);
+  const out = await ffmpeg.readFile('output.mp4');
+
+  try { await ffmpeg.deleteFile('output.mp4'); } catch (e) { /* ignore */ }
+
+  const blob = new Blob([out], { type: 'video/mp4' });
+  imageObj.targetExt = 'mp4';
   applyResult(imageObj, getResultIndex(imageObj), blob);
 }
 
@@ -774,6 +930,11 @@ async function downloadAll() {
   const folder = zip.folder(`comprimidos_${CONFIG.id}`);
   const zipLevel = typeof selectedMode.value === 'number' ? selectedMode.value : 6;
 
+  function targetExtFor(img) {
+    if (img.targetExt) return img.targetExt;
+    return (window.CONVERT_OPTIONS && String(window.CONVERT_OPTIONS.target || 'jpg')) || 'jpg';
+  }
+
   for (let i = 0; i < readyImages.length; i++) {
     const img = readyImages[i];
 
@@ -788,6 +949,8 @@ async function downloadAll() {
       if (CONFIG.kind === 'svg') newName = img.file.name.replace(/\.svg$/i, '.min.svg');
       else if (CONFIG.kind === 'mp3') newName = `${base}.mp3`;
       else if (CONFIG.kind === 'heic') newName = `${base}_comprimido.jpg`;
+      else if (CONFIG.kind === 'convert')
+        newName = `${base}.${targetExtFor(img)}`;
       else newName = `${base}_comprimido.${CONFIG.outputExt}`;
       folder.file(newName, img.compressedBlob);
     }

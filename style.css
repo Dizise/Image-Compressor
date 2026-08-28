@@ -967,3 +967,112 @@ body {
     font-size: 0.75rem;
   }
 }
+
+/* ============================================
+   CONVERTER PANEL (select) - same design
+   ============================================ */
+.convert-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 32px;
+}
+
+.convert-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 12px;
+}
+
+.convert-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.convert-select-wrap {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+
+.convert-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 14px 48px 14px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.convert-select:hover {
+  border-color: var(--border-light);
+}
+
+.convert-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.convert-select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.convert-select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.convert-arrow {
+  flex-shrink: 0;
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+}
+
+.convert-arrow svg {
+  width: 20px;
+  height: 20px;
+}
+
+.convert-hint {
+  flex-basis: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 768px) {
+  .convert-panel {
+    padding: 20px;
+  }
+
+  .convert-arrow {
+    display: none;
+  }
+}
