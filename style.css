@@ -787,3 +787,183 @@ body {
     font-size: 0.9rem;
   }
 }
+
+/* ============================================
+   MENU (Home) - same language as the design
+   ============================================ */
+.menu-section {
+  margin-bottom: 80px;
+}
+
+.menu-section-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 24px;
+}
+
+.menu-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  text-decoration: none;
+  color: var(--text);
+  transition:
+    transform 0.4s var(--ease-spring),
+    box-shadow 0.4s ease,
+    border-color 0.3s ease;
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+  animation: cardEnter 0.5s var(--ease-out) forwards;
+  will-change: transform;
+}
+
+.menu-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  border-color: var(--border-light);
+}
+
+.menu-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.menu-card-extension {
+  font-family: var(--font-display);
+  font-size: 48px;
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  transition: color 0.3s ease;
+}
+
+.menu-card:hover .menu-card-extension {
+  color: var(--accent);
+}
+
+.menu-card-arrow {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.menu-card-arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+.menu-card:hover .menu-card-arrow {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+  transform: translateX(2px);
+}
+
+.menu-card-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.menu-card-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* --- Back to Menu link --- */
+.menu-link {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 1000;
+  padding: 12px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.4s var(--ease-smooth);
+}
+
+.menu-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px var(--accent-glow);
+}
+
+/* --- File type block (non-image cards) --- */
+.file-type-block {
+  height: 200px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 64px;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: radial-gradient(ellipse at center, var(--accent-glow), transparent 70%);
+  transition: color 0.3s ease;
+}
+
+.image-card:hover .file-type-block {
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .menu-section {
+    margin-bottom: 56px;
+  }
+
+  .menu-card-extension {
+    font-size: 40px;
+  }
+
+  .menu-link {
+    top: 16px;
+    left: 16px;
+    padding: 10px 20px;
+    font-size: 0.75rem;
+  }
+}

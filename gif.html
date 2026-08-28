@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>Compresor de GIF</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    <div class="grid-lines" aria-hidden="true"></div>
+
+    <a class="menu-link" href="index.html">← Menu</a>
+    <button class="sticky-download" id="stickyDownloadBtn">Descargar ZIP</button>
+
+    <main class="container">
+        <header class="header fade-in-stagger">
+            <div class="header-label">
+                <span class="label-dot"></span>
+                <span class="label-text">UETS / Comunicacion</span>
+            </div>
+            <h1 class="hero-title">Compresor<br>de GIF</h1>
+            <p class="subtitle">Comprime tus GIF animados reduciendo paleta de colores y fotogramas</p>
+        </header>
+        <div id="app"></div>
+    </main>
+
+    <script>
+        window.TYPE_CONFIG = {
+            id: 'gif',
+            kind: 'gif',
+            accept: 'image/gif',
+            exts: ['.gif'],
+            outputExt: 'gif',
+            preview: true,
+            noun: 'imagenes',
+            selectedText: 'imagenes seleccionadas',
+            modes: [
+                { label: 'Baja', value: { quality: 10, skip: 0 }, display: 'Max' },
+                { label: 'Media', value: { quality: 8, skip: 0 }, display: 'Normal' },
+                { label: 'Alta', value: { quality: 5, skip: 1 }, display: 'Ahorro' },
+            ],
+        };
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>

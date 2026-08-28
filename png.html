@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>Compresor de PNG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    <div class="grid-lines" aria-hidden="true"></div>
+
+    <a class="menu-link" href="index.html">← Menu</a>
+    <button class="sticky-download" id="stickyDownloadBtn">Descargar ZIP</button>
+
+    <main class="container">
+        <header class="header fade-in-stagger">
+            <div class="header-label">
+                <span class="label-dot"></span>
+                <span class="label-text">UETS / Comunicacion</span>
+            </div>
+            <h1 class="hero-title">Compresor<br>de PNG</h1>
+            <p class="subtitle">Comprime tus imagenes PNG, aplanando transparencias y reduciendo tamano</p>
+        </header>
+        <div id="app"></div>
+    </main>
+
+    <script>
+        window.TYPE_CONFIG = {
+            id: 'png',
+            kind: 'canvas',
+            accept: 'image/png',
+            exts: ['.png'],
+            outputMime: 'image/png',
+            outputExt: 'png',
+            preview: true,
+            noun: 'imagenes',
+            selectedText: 'imagenes seleccionadas',
+            modes: [
+                { label: 'Baja', value: { resize: 1, flatten: false }, display: 'Suave' },
+                { label: 'Media', value: { resize: 1, flatten: true }, display: 'Alfa' },
+                { label: 'Alta', value: { resize: 0.6, flatten: true }, display: 'Agresivo' },
+            ],
+        };
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>

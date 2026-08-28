@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "frontend-design": {
+      "source": "kumbajirajkumar123/frontend-design",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "c768c3c4550e7da5b40632bb7899e18ee86f5c9c5e3f7b1063911338c0271c1b"
+    }
+  }
+}

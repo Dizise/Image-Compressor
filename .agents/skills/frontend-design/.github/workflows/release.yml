@@ -1,0 +1,75 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Create .skill package
+      run: |
+        # Create package excluding unnecessary files
+        zip -r frontend-design-${GITHUB_REF_NAME}.skill \
+          SKILL.md \
+          references/ \
+          -x "*.git*" "*.DS_Store" "*node_modules*" "*.github*"
+        
+        echo "✅ Created frontend-design-${GITHUB_REF_NAME}.skill"
+    
+    - name: Create Release Notes
+      run: |
+        cat > RELEASE_NOTES.md << 'EOF'
+        # Frontend Design ${GITHUB_REF_NAME}
+        
+        Transform bland UIs into bold, memorable experiences.
+        
+        ## Installation
+        
+        ### Claude.ai
+        Download the `.skill` file below and upload to Settings → Features → Skills
+        
+        ### Claude Code / Cursor / OpenCode
+        ```bash
+        git clone https://github.com/${{ github.repository }}.git ~/.claude/skills/frontend-design
+        ```
+        
+        ## What's Included
+        
+        - ✅ Design thinking framework with 15+ aesthetic directions
+        - ✅ Typography mastery (distinctive fonts, not Inter/Roboto)
+        - ✅ Animation patterns (CSS + Framer Motion)
+        - ✅ Production-ready code generation
+        - ✅ Screenshot analysis & transformation
+        - ✅ Accessibility-first approach
+        
+        ## Aesthetic Directions
+        
+        Neo-Brutalist, Editorial Luxury, Glassmorphism, Y2K/Cyber, Minimalist, Maximalist, and more!
+        
+        ## Documentation
+        
+        See [README.md](https://github.com/${{ github.repository }}#readme) for full documentation and examples.
+        
+        ---
+        
+        **Made with ❤️ for designers and developers**
+        EOF
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: frontend-design-*.skill
+        body_path: RELEASE_NOTES.md
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

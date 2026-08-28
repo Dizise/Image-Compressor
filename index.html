@@ -4,19 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a0a">
-    <title>Compresor de Imagenes</title>
+    <title>Compresor de Archivos</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
     <div class="noise-overlay"></div>
     <div class="grid-lines" aria-hidden="true"></div>
-
-    <button class="sticky-download" id="stickyDownloadBtn">Descargar ZIP</button>
 
     <main class="container">
         <header class="header fade-in-stagger">
@@ -24,82 +20,109 @@
                 <span class="label-dot"></span>
                 <span class="label-text">UETS / Comunicacion</span>
             </div>
-            <h1 class="hero-title">Compresor<br>de Imagenes</h1>
-            <p class="subtitle">Comprime tus imagenes JPEG en lote de forma rapida y sencilla</p>
+            <h1 class="hero-title">Compresor<br>de Archivos</h1>
+            <p class="subtitle">Elige un formato y comprime tus archivos en lote, de forma rapida y sencilla</p>
         </header>
 
-        <div class="status-bar reveal" id="statusBar">
-            <div class="counter-group">
-                <div class="counter">
-                    <span class="counter-value" id="counterUploaded">0000</span>
-                    <span class="counter-label">Subidas</span>
-                </div>
-                <div class="counter-divider"></div>
-                <div class="counter">
-                    <span class="counter-value" id="counterCompressed">0000</span>
-                    <span class="counter-label">Comprimidas</span>
-                </div>
-                <div class="counter-divider"></div>
-                <div class="counter">
-                    <span class="counter-value counter-total" id="counterTotal">0000</span>
-                    <span class="counter-label">Max</span>
-                </div>
-            </div>
-            <div class="counter-progress">
-                <div class="counter-progress-fill" id="counterProgressFill"></div>
-            </div>
-        </div>
+        <section class="menu-section">
+            <h2 class="menu-section-title">Imagenes</h2>
+            <div class="menu-grid">
+                <a class="menu-card" href="jpeg.html" style="animation-delay: 0.05s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">JPG</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Imagen</span>
+                    <span class="menu-card-desc">Fotos y capturas de pantalla</span>
+                </a>
 
-        <section class="upload-zone reveal" id="dropZone" aria-label="Zona de carga de imagenes">
-            <div class="upload-icon">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="12" width="36" height="28" rx="3" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M6 20h36" stroke="currentColor" stroke-width="2"/>
-                    <path d="M24 6l-8 8h6v8h4v-8h6l-8-8z" fill="currentColor"/>
-                </svg>
+                <a class="menu-card" href="png.html" style="animation-delay: 0.1s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">PNG</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Imagen</span>
+                    <span class="menu-card-desc">Graficos y transparencias</span>
+                </a>
+
+                <a class="menu-card" href="webp.html" style="animation-delay: 0.15s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">WEBP</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Imagen</span>
+                    <span class="menu-card-desc">Web optimizada</span>
+                </a>
+
+                <a class="menu-card" href="avif.html" style="animation-delay: 0.2s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">AVIF</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Imagen</span>
+                    <span class="menu-card-desc">Formato moderno y ligero</span>
+                </a>
+
+                <a class="menu-card" href="gif.html" style="animation-delay: 0.25s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">GIF</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Imagen animada</span>
+                    <span class="menu-card-desc">Gifs y memes</span>
+                </a>
+
+                <a class="menu-card" href="svg.html" style="animation-delay: 0.3s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">SVG</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Imagen vectorial</span>
+                    <span class="menu-card-desc">Logos e iconos</span>
+                </a>
+
+                <a class="menu-card" href="heic.html" style="animation-delay: 0.35s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">HEIC</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Imagen</span>
+                    <span class="menu-card-desc">Fotos de iPhone / iOS</span>
+                </a>
+
+                <a class="menu-card" href="bmp.html" style="animation-delay: 0.4s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">BMP</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Imagen</span>
+                    <span class="menu-card-desc">Sin compresion previa</span>
+                </a>
             </div>
-            <p class="upload-text">Arrastra tus imagenes aqui</p>
-            <p class="upload-subtext">o haz clic para seleccionar  /  max. 2000 imagenes JPEG</p>
-            <input type="file" id="fileInput" multiple accept="image/jpeg,image/jpg" hidden>
         </section>
 
-        <div class="controls reveal" id="controls" style="display: none;">
-            <div class="compression-modes">
-                <button class="mode-btn" data-quality="0.8">
-                    <span class="mode-label">Baja</span>
-                    <span class="mode-value">80%</span>
-                </button>
-                <button class="mode-btn active" data-quality="0.6">
-                    <span class="mode-label">Media</span>
-                    <span class="mode-value">60%</span>
-                </button>
-                <button class="mode-btn" data-quality="0.4">
-                    <span class="mode-label">Alta</span>
-                    <span class="mode-value">40%</span>
-                </button>
-            </div>
-            <div class="stats" id="stats"></div>
-            <p class="batch-info" id="batchInfo" style="display: none;"></p>
-            <div class="actions">
-                <button class="btn btn-primary" id="compressBtn">Comprimir Todo</button>
-                <button class="btn btn-secondary" id="clearBtn">Limpiar</button>
-            </div>
-        </div>
+        <section class="menu-section">
+            <h2 class="menu-section-title">Audio y Archivos</h2>
+            <div class="menu-grid">
+                <a class="menu-card" href="mp3.html" style="animation-delay: 0.45s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">MP3</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Audio</span>
+                    <span class="menu-card-desc">Musica y grabaciones</span>
+                </a>
 
-        <div class="progress-container reveal" id="progressContainer" style="display: none;">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+                <a class="menu-card" href="zip.html" style="animation-delay: 0.5s">
+                    <span class="menu-card-top">
+                        <span class="menu-card-extension">ZIP</span>
+                        <span class="menu-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </span>
+                    <span class="menu-card-label">Archivos</span>
+                    <span class="menu-card-desc">Comprime varios archivos</span>
+                </a>
             </div>
-            <p class="progress-text" id="progressText">0 / 0 imagenes</p>
-        </div>
-
-        <div class="images-grid" id="imagesGrid"></div>
-
-        <div class="download-actions" id="downloadActions" style="display: none;">
-            <button class="btn btn-success" id="downloadAllBtn">Descargar ZIP</button>
-        </div>
+        </section>
     </main>
-
-    <script src="app.js"></script>
 </body>
 </html>
