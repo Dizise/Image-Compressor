@@ -422,21 +422,26 @@ body {
   border-top: 1px solid var(--border);
 }
 
-.ai-status {
-  margin-top: 12px;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--accent);
-  padding: 10px 12px;
-  background: var(--accent-glow);
-  border-radius: 6px;
-  letter-spacing: 0.02em;
-  line-height: 1.5;
+.api-key-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
 }
 
-.bg-config .btn-sm {
-  margin-top: 8px;
-  width: 100%;
+.api-key-input {
+  flex: 1;
+  background: var(--surface-hover);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.api-key-input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .btn-sm {
@@ -884,6 +889,10 @@ body {
 
   .format-control {
     width: 100%;
+  }
+
+  .api-key-row {
+    flex-direction: column;
   }
 
   .compression-modes {
